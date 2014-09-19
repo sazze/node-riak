@@ -1,0 +1,49 @@
+{
+  "name": "sz-riak",
+  "version": "1.0.0",
+  "description": "A HTTP REST API client for riak",
+  "main": "./riak.js",
+  "homepage": "https://gitlab.sazze.com/nodejs/sz-riak",
+  "scripts": {
+    "test": "make test"
+  },
+  "engines": {
+    "node": ">=0.8.x"
+  },
+  "publishConfig": {
+    "registry": "http://npm.sazze.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://gitlab.sazze.com/nodejs/sz-riak.git"
+  },
+  "dependencies": {
+    "lodash": "^2.4.1",
+    "request": "^2.44.0"
+  },
+  "devDependencies": {
+    "mocha": "^1.20.1",
+    "chai": "^1.9.1"
+  },
+  "keywords": [],
+  "bugs": {
+    "url": "https://gitlab.sazze.com/nodejs/sz-riak/issues"
+  },
+  "author": {
+    "name": "Craig Thayer",
+    "email": "cthayer@sazze.com"
+  },
+  "license": "Copyright 2014 by Sazze, Inc.  All rights reserved.",
+  "contributors": [
+    {
+      "name": "Craig Thayer",
+      "email": "cthayer@sazze.com"
+    }
+  ],
+  "maintainers": [
+    {
+      "name": "Craig Thayer",
+      "email": "cthayer@sazze.com"
+    }
+  ]
+}
