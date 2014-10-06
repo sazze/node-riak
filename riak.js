@@ -51,6 +51,11 @@ Riak.parseHeaders = function (headers) {
           var link = {link: parts[0].trim().replace('<', '').replace('>', ''), tag: ''};
 
           if (!_.isUndefined(parts[1])) {
+            // skip internal riak headers that are not allowed client requests
+            if (_.contains(parts[1], 'rel=')) {
+              return;
+            }
+
             link.tag = parts[1].trim().replace('riaktag="', '').replace('"', '');
           }
 
