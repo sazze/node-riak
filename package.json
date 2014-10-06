@@ -1,6 +1,6 @@
 {
   "name": "sz-riak",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A HTTP REST API client for riak",
   "main": "./riak.js",
   "homepage": "https://gitlab.sazze.com/nodejs/sz-riak",
