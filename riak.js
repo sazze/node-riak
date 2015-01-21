@@ -17,7 +17,7 @@ function Riak(bucket) {
   this.port = process.env.SZ_RIAK_PORT || (AURA_DEFINED && !_.isUndefined(global.aura.config.riak) ? global.aura.config.riak.port : 8098);
 }
 
-Riak.ASYNC_LIMIT = 20;
+Riak.ASYNC_LIMIT = process.env.SZ_RIAK_ASYNC_LIMIT || 20;
 
 //
 // static methods
