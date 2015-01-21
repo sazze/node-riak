@@ -5,6 +5,7 @@
 
 var _ = require('lodash');
 var client = require('request');
+var async = require('async');
 
 var AURA_DEFINED = !_.isUndefined(global.aura);
 
@@ -15,6 +16,8 @@ function Riak(bucket) {
   this.host = process.env.SZ_RIAK_HOST || (AURA_DEFINED && !_.isUndefined(global.aura.config.riak) ? global.aura.config.riak.host : '127.0.0.1');
   this.port = process.env.SZ_RIAK_PORT || (AURA_DEFINED && !_.isUndefined(global.aura.config.riak) ? global.aura.config.riak.port : 8098);
 }
+
+Riak.ASYNC_LIMIT = 20;
 
 //
 // static methods
@@ -161,6 +164,21 @@ module.exports = Riak;
 
 Riak.prototype.getUrl = function (key) {
   return 'http://' + this.host + ':' + this.port + '/buckets/' + this.bucket + '/keys/' + key;
+};
+
+Riak.prototype.mget = function (keys, cb) {
+  if (!_.isArray(keys)) {
+    cb(new Error('keys must be an array'));
+    return;
+  }
+
+  async.mapLimit(keys, Riak.ASYNC_LIMIT, function (key, callback) {
+    this.get(key, function (err, res, headers) {
+      callback(err, {resp: res, headers: headers});
+    });
+  }.bind(this), function (err, results) {
+    cb(err, results);
+  });
 };
 
 Riak.prototype.get = function (key, cb) {
