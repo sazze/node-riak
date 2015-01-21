@@ -289,6 +289,17 @@ Riak.prototype.put = function (key, body, headers, cb) {
   });
 };
 
+Riak.prototype.mdel = function (keys, cb) {
+  if (!_.isArray(keys)) {
+    cb(new Error('keys must be an array'));
+    return;
+  }
+
+  async.mapLimit(keys, Riak.ASYNC_LIMIT, this.del.bind(this), function (err) {
+    cb(err);
+  });
+};
+
 Riak.prototype.del = function (key, cb) {
   if (!_.isFunction(cb)) {
     cb = _.noop;
