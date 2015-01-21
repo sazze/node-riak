@@ -226,6 +226,26 @@ Riak.prototype.get = function (key, cb) {
   });
 };
 
+Riak.prototype.mput = function (puts, cb) {
+  if (!_.isArray(puts)) {
+    cb(new Error('puts must be an array of put objects'));
+    return;
+  }
+
+  async.mapLimit(puts, Riak.ASYNC_LIMIT, function (put, callback) {
+    if (!_.isPlainObject(put)) {
+      callback(new Error('Invalid request object: ' + put));
+      return;
+    }
+
+    this.put(put.key, put.body, put.headers, function (err, res, headers) {
+      callback(err, {resp: res, headers: headers});
+    });
+  }.bind(this), function (err, results) {
+    cb(err, results);
+  });
+};
+
 Riak.prototype.put = function (key, body, headers, cb) {
   if (_.isUndefined(headers)) {
     headers = {};
