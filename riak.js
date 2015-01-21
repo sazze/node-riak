@@ -6,6 +6,7 @@
 var _ = require('lodash');
 var client = require('request');
 var async = require('async');
+var querystring = require('querystring');
 
 var AURA_DEFINED = !_.isUndefined(global.aura);
 
@@ -164,6 +165,16 @@ module.exports = Riak;
 
 Riak.prototype.getUrl = function (key) {
   return 'http://' + this.host + ':' + this.port + '/buckets/' + this.bucket + '/keys/' + key;
+};
+
+Riak.prototype.getSecondaryIndexUrl = function (index, search, options) {
+  var url = 'http://' + this.host + ':' + this.port + '/buckets/' + this.bucket + '/index/' + index + '/' + (search.join ? search.join('/') : search);
+
+  if (options && _.isPlainObject(options)) {
+    url += '?' + querystring.stringify(options);
+  }
+
+  return url;
 };
 
 Riak.prototype.mget = function (keys, cb) {
@@ -355,5 +366,53 @@ Riak.prototype.del = function (key, cb) {
     }
 
     cb(null);
+  });
+};
+
+Riak.prototype.secondaryIndexSearch = function (index, search, options, cb) {
+  if (_.isFunction(options)) {
+    cb = options;
+    options = undefined;
+  }
+
+  if (!_.isFunction(cb)) {
+    cb = _.noop;
+  }
+
+  if (!_.isString(index) || !index) {
+    cb(new Error('Invalid index: ' + index));
+    return;
+  }
+
+  var url = this.getSecondaryIndexUrl(index, search, options);
+
+  log.verbose('riak url: GET ' + url);
+
+  client(url, function (err, resp, body) {
+    if (err) {
+      cb(err);
+      return;
+    }
+
+    log.debug('riak response code: ' + resp.statusCode);
+    log.verbose('riak headers: ' + JSON.stringify(resp.headers));
+    log.verbose('riak response: ' + body);
+
+    if (resp.statusCode == 404) {
+      // handle not found response
+      cb(null, {});
+      return;
+    }
+
+    if (resp.statusCode != 200) {
+      cb(new Error('riak returned status code: ' + resp.statusCode));
+      return;
+    }
+
+    if (_.isString(body) && resp.headers['content-type'].toLowerCase() == 'application/json') {
+      body = JSON.parse(body);
+    }
+
+    cb(null, body);
   });
 };
