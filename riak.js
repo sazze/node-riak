@@ -405,7 +405,7 @@ Riak.prototype.secondaryIndexSearch = function (index, search, options, cb) {
     }
 
     if (resp.statusCode != 200) {
-      cb(new Error('riak returned status code: ' + resp.statusCode));
+      cb(new Error('riak returned status code: ' + resp.statusCode), body);
       return;
     }
 

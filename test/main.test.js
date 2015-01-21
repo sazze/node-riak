@@ -35,6 +35,9 @@ describe('riak client', function () {
     expect(riak).to.have.property('getUrl');
     expect(riak.getUrl).to.be.a('function');
     expect(riak.getUrl(1)).to.equal('http://' + process.env.SZ_RIAK_HOST + ':8098/buckets/' + bucket + '/keys/1');
+    expect(riak).to.have.property('getSecondaryIndexUrl');
+    expect(riak.getSecondaryIndexUrl).to.be.a('function');
+    expect(riak.getSecondaryIndexUrl('index', 1)).to.equal('http://' + process.env.SZ_RIAK_HOST + ':8098/buckets/' + bucket + '/index/index/1');
     expect(riak).to.have.property('get');
     expect(riak.get).to.be.a('function');
     expect(riak).to.have.property('put');
@@ -47,6 +50,8 @@ describe('riak client', function () {
     expect(riak.mput).to.be.a('function');
     expect(riak).to.have.property('mdel');
     expect(riak.mdel).to.be.a('function');
+    expect(riak).to.have.property('secondaryIndexSearch');
+    expect(riak.secondaryIndexSearch).to.be.a('function');
   });
 
   it('should parse headers', function () {
@@ -246,6 +251,18 @@ describe('riak client', function () {
           done(err);
         });
       });
+    });
+  });
+
+  it('should query secondary indexes', function(done) {
+    var riak = new Riak(bucket);
+
+    riak.secondaryIndexSearch('test_bin', 'foo', function (err, res) {
+      expect(err.message).to.contain('status code: 500');
+      expect(res).to.be.a('string');
+      expect(res).to.contain('indexes_not_supported');
+      
+      done();
     });
   });
 });
