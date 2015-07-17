@@ -2,8 +2,6 @@ var expect = require('chai').expect;
 var _ = require('lodash');
 var os = require('os');
 
-process.env.SZ_RIAK_HOST = '10.1.26.52';  // use development riak cluster for testing
-
 var Riak = require('../');
 var bucket = 'sz-riak-test.' + os.hostname() + os.uptime();
 
@@ -14,6 +12,9 @@ describe('riak client', function () {
     expect(Riak.parseHeaders).to.be.a('function');
     expect(Riak).to.have.property('prepareHeaders');
     expect(Riak.prepareHeaders).to.be.a('function');
+    expect(Riak).to.have.property('ASYNC_LIMIT');
+    expect(Riak.ASYNC_LIMIT).to.be.a('number');
+    expect(Riak.ASYNC_LIMIT).to.be.equal(20);
   });
 
   it('should initialize', function () {
@@ -32,12 +33,23 @@ describe('riak client', function () {
     expect(riak).to.have.property('getUrl');
     expect(riak.getUrl).to.be.a('function');
     expect(riak.getUrl(1)).to.equal('http://' + process.env.SZ_RIAK_HOST + ':8098/buckets/' + bucket + '/keys/1');
+    expect(riak).to.have.property('getSecondaryIndexUrl');
+    expect(riak.getSecondaryIndexUrl).to.be.a('function');
+    expect(riak.getSecondaryIndexUrl('index', 1)).to.equal('http://' + process.env.SZ_RIAK_HOST + ':8098/buckets/' + bucket + '/index/index/1');
     expect(riak).to.have.property('get');
     expect(riak.get).to.be.a('function');
     expect(riak).to.have.property('put');
     expect(riak.put).to.be.a('function');
     expect(riak).to.have.property('del');
     expect(riak.del).to.be.a('function');
+    expect(riak).to.have.property('mget');
+    expect(riak.mget).to.be.a('function');
+    expect(riak).to.have.property('mput');
+    expect(riak.mput).to.be.a('function');
+    expect(riak).to.have.property('mdel');
+    expect(riak.mdel).to.be.a('function');
+    expect(riak).to.have.property('secondaryIndexSearch');
+    expect(riak.secondaryIndexSearch).to.be.a('function');
   });
 
   it('should parse headers', function () {
@@ -193,6 +205,62 @@ describe('riak client', function () {
           done(err);
         });
       });
+    });
+  });
+
+  it('should manipulate multiple keys', function (done) {
+    var riak = new Riak(bucket);
+    var obj = {
+      test: 'testing',
+      some: 'value'
+    };
+    var keys = [
+      'test1',
+      'test2',
+      'test3'
+    ];
+    var puts = [
+      {key: 'test1', body: obj},
+      {key: 'test2', body: obj},
+      {key: 'test3', body: obj}
+    ];
+
+    riak.mput(puts, function (err, resp) {
+      expect(err).to.equal(undefined);
+
+      _.forEach(resp, function (r) {
+        var parsedHeaders = Riak.parseHeaders(r.headers);
+
+        expect(r.headers['content-type']).to.equal('application/json');
+        expect(r.resp).to.eql(_.merge(obj, parsedHeaders));
+      });
+
+      riak.mget(keys, function (err, resp) {
+        expect(err).to.equal(undefined);
+
+        _.forEach(resp, function (r) {
+          var parsedHeaders = Riak.parseHeaders(r.headers);
+
+          expect(r.headers['content-type']).to.equal('application/json');
+          expect(r.resp).to.eql(_.merge(obj, parsedHeaders));
+        });
+
+        riak.mdel(keys, function (err) {
+          done(err);
+        });
+      });
+    });
+  });
+
+  it('should query secondary indexes', function(done) {
+    var riak = new Riak(bucket);
+
+    riak.secondaryIndexSearch('test_bin', 'foo', function (err, res) {
+      expect(err.message).to.contain('status code: 500');
+      expect(res).to.be.a('string');
+      expect(res).to.contain('indexes_not_supported');
+      
+      done();
     });
   });
 });

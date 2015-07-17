@@ -5,16 +5,30 @@
 
 var _ = require('lodash');
 var client = require('request');
+var async = require('async');
+var querystring = require('querystring');
 
-var AURA_DEFINED = !_.isUndefined(global.aura);
+var log = {};
+log.debug = require('debug')('@sazze/riak:debug');
+log.verbose = require('debug')('@sazze/riak:verbose');
 
-var log = (!AURA_DEFINED || _.isUndefined(global.aura.log) ? {error: console.error, warn: console.warn, info: console.info, debug: _.noop, verbose: _.noop} : global.aura.log);
+function Riak(options) {
+  if (_.isString(options)) {
+    options = {
+      bucket: options
+    };
+  }
 
-function Riak(bucket) {
-  this.bucket = bucket;
-  this.host = process.env.SZ_RIAK_HOST || (AURA_DEFINED && !_.isUndefined(global.aura.config.riak) ? global.aura.config.riak.host : '127.0.0.1');
-  this.port = process.env.SZ_RIAK_PORT || (AURA_DEFINED && !_.isUndefined(global.aura.config.riak) ? global.aura.config.riak.port : 8098);
+  if (!_.isPlainObject(options)) {
+    options = {};
+  }
+
+  this.bucket = options.bucket || '';
+  this.host = options.host || process.env.SZ_RIAK_HOST || '127.0.0.1';
+  this.port = options.port || process.env.SZ_RIAK_PORT || 8098;
 }
+
+Riak.ASYNC_LIMIT = process.env.SZ_RIAK_ASYNC_LIMIT || 20;
 
 //
 // static methods
@@ -51,6 +65,11 @@ Riak.parseHeaders = function (headers) {
           var link = {link: parts[0].trim().replace('<', '').replace('>', ''), tag: ''};
 
           if (!_.isUndefined(parts[1])) {
+            // skip internal riak headers that are not allowed client requests
+            if (_.contains(parts[1], 'rel=')) {
+              return;
+            }
+
             link.tag = parts[1].trim().replace('riaktag="', '').replace('"', '');
           }
 
@@ -158,6 +177,31 @@ Riak.prototype.getUrl = function (key) {
   return 'http://' + this.host + ':' + this.port + '/buckets/' + this.bucket + '/keys/' + key;
 };
 
+Riak.prototype.getSecondaryIndexUrl = function (index, search, options) {
+  var url = 'http://' + this.host + ':' + this.port + '/buckets/' + this.bucket + '/index/' + index + '/' + (search.join ? search.join('/') : search);
+
+  if (options && _.isPlainObject(options)) {
+    url += '?' + querystring.stringify(options);
+  }
+
+  return url;
+};
+
+Riak.prototype.mget = function (keys, cb) {
+  if (!_.isArray(keys)) {
+    cb(new Error('keys must be an array'));
+    return;
+  }
+
+  async.mapLimit(keys, Riak.ASYNC_LIMIT, function (key, callback) {
+    this.get(key, function (err, res, headers) {
+      callback(err, {resp: res, headers: headers});
+    });
+  }.bind(this), function (err, results) {
+    cb(err, results);
+  });
+};
+
 Riak.prototype.get = function (key, cb) {
   if (!_.isFunction(cb)) {
     cb = _.noop;
@@ -200,6 +244,26 @@ Riak.prototype.get = function (key, cb) {
     _.merge(body, Riak.parseHeaders(resp.headers));
 
     cb(null, body, resp.headers);
+  });
+};
+
+Riak.prototype.mput = function (puts, cb) {
+  if (!_.isArray(puts)) {
+    cb(new Error('puts must be an array of put objects'));
+    return;
+  }
+
+  async.mapLimit(puts, Riak.ASYNC_LIMIT, function (put, callback) {
+    if (!_.isPlainObject(put)) {
+      callback(new Error('Invalid request object: ' + put));
+      return;
+    }
+
+    this.put(put.key, put.body, put.headers, function (err, res, headers) {
+      callback(err, {resp: res, headers: headers});
+    });
+  }.bind(this), function (err, results) {
+    cb(err, results);
   });
 };
 
@@ -266,6 +330,17 @@ Riak.prototype.put = function (key, body, headers, cb) {
   });
 };
 
+Riak.prototype.mdel = function (keys, cb) {
+  if (!_.isArray(keys)) {
+    cb(new Error('keys must be an array'));
+    return;
+  }
+
+  async.mapLimit(keys, Riak.ASYNC_LIMIT, this.del.bind(this), function (err) {
+    cb(err);
+  });
+};
+
 Riak.prototype.del = function (key, cb) {
   if (!_.isFunction(cb)) {
     cb = _.noop;
@@ -301,5 +376,53 @@ Riak.prototype.del = function (key, cb) {
     }
 
     cb(null);
+  });
+};
+
+Riak.prototype.secondaryIndexSearch = function (index, search, options, cb) {
+  if (_.isFunction(options)) {
+    cb = options;
+    options = undefined;
+  }
+
+  if (!_.isFunction(cb)) {
+    cb = _.noop;
+  }
+
+  if (!_.isString(index) || !index) {
+    cb(new Error('Invalid index: ' + index));
+    return;
+  }
+
+  var url = this.getSecondaryIndexUrl(index, search, options);
+
+  log.verbose('riak url: GET ' + url);
+
+  client(url, function (err, resp, body) {
+    if (err) {
+      cb(err);
+      return;
+    }
+
+    log.debug('riak response code: ' + resp.statusCode);
+    log.verbose('riak headers: ' + JSON.stringify(resp.headers));
+    log.verbose('riak response: ' + body);
+
+    if (resp.statusCode == 404) {
+      // handle not found response
+      cb(null, {});
+      return;
+    }
+
+    if (resp.statusCode != 200) {
+      cb(new Error('riak returned status code: ' + resp.statusCode), body);
+      return;
+    }
+
+    if (_.isString(body) && resp.headers['content-type'].toLowerCase() == 'application/json') {
+      body = JSON.parse(body);
+    }
+
+    cb(null, body);
   });
 };
