@@ -21,7 +21,7 @@ Usage
     
     var riak = new Riak(options);
     
-    riak.get('key', function (err, obj, headers) {
+    riak.get('key', function (err, obj, resp) {
         // do something
     });
 ```
@@ -38,13 +38,13 @@ Methods
 
 * `get(key, cb)`: get an object from riak
     * `key`: [string] the key of the object to get
-    * `cb`: [function] callback function.  Accepts 3 arguments: `err`, `obj`, and `headers`.
+    * `cb`: [function] callback function.  Accepts 3 arguments: `err`, `obj`, and `resp`.
 
 * `put(key, body, headers, cb)`: create/update an object in riak
     * `key`: [string] the key of the object to get
     * `body`: [string|object] the data or object to create/update in riak
     * `headers`: [object] \(optional) custom headers to store with the object
-    * `cb`: [function] callback function.  Accepts 3 arguments: `err`, `obj`, and `headers`.
+    * `cb`: [function] callback function.  Accepts 3 arguments: `err`, `obj`, and `resp`.
 
 * `del(key, cb)`: delete an object from riak
     * `key`: [string] the key of the object to get
@@ -54,7 +54,7 @@ Methods
     * `index`: [string] the name of the index to search
     * `search`: [string] the search query
     * `options`: [array] \(optional) search options
-    * `cb`: [function] callback function.  Accepts 2 arguments: `err` and `resp`.
+    * `cb`: [function] callback function.  Accepts 3 arguments: `err`, `resp`, and `rawResp`.
 
 * `mget(keys, cb)`: get multiple objects from riak
     * `keys`: [array] key names to get
