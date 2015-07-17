@@ -2,8 +2,6 @@ var expect = require('chai').expect;
 var _ = require('lodash');
 var os = require('os');
 
-process.env.SZ_RIAK_HOST = '10.1.26.52';  // use development riak cluster for testing
-
 var Riak = require('../');
 var bucket = 'sz-riak-test.' + os.hostname() + os.uptime();
 

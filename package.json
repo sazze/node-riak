@@ -1,24 +1,26 @@
 {
-  "name": "sz-riak",
-  "version": "1.1.0",
+  "name": "@sazze/riak",
+  "version": "2.0.0",
   "description": "A HTTP REST API client for riak",
   "main": "./riak.js",
-  "homepage": "https://gitlab.sazze.com/nodejs/sz-riak",
+  "homepage": "https://github.com/nodejs/node-riak",
   "scripts": {
     "test": "make test"
   },
   "engines": {
-    "node": ">=0.8.x"
+    "node": ">=0.8.x",
+    "npm": ">=1.4.6"
   },
   "publishConfig": {
-    "registry": "http://npm.sazze.com"
+    "registry": "https://registry.npmjs.org"
   },
   "repository": {
     "type": "git",
-    "url": "https://gitlab.sazze.com/nodejs/sz-riak.git"
+    "url": "https://github.com/sazze/node-riak.git"
   },
   "dependencies": {
     "async": "^0.9.0",
+    "debug": "^2.2.0",
     "lodash": "^2.4.1",
     "request": "^2.44.0"
   },
@@ -26,15 +28,20 @@
     "mocha": "^1.20.1",
     "chai": "^1.9.1"
   },
-  "keywords": [],
+  "keywords": [
+    "riak",
+    "http",
+    "api",
+    "clilent"
+  ],
   "bugs": {
-    "url": "https://gitlab.sazze.com/nodejs/sz-riak/issues"
+    "url": "https://github.com/sazze/node-riak/issues"
   },
   "author": {
     "name": "Craig Thayer",
     "email": "cthayer@sazze.com"
   },
-  "license": "Copyright 2014 by Sazze, Inc.  All rights reserved.",
+  "license": "MIT",
   "contributors": [
     {
       "name": "Craig Thayer",

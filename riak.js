@@ -8,14 +8,24 @@ var client = require('request');
 var async = require('async');
 var querystring = require('querystring');
 
-var AURA_DEFINED = !_.isUndefined(global.aura);
+var log = {};
+log.debug = require('debug')('@sazze/riak:debug');
+log.verbose = require('debug')('@sazze/riak:verbose');
 
-var log = (!AURA_DEFINED || _.isUndefined(global.aura.log) ? {error: console.error, warn: console.warn, info: console.info, debug: _.noop, verbose: _.noop} : global.aura.log);
+function Riak(options) {
+  if (_.isString(options)) {
+    options = {
+      bucket: options
+    };
+  }
 
-function Riak(bucket) {
-  this.bucket = bucket;
-  this.host = process.env.SZ_RIAK_HOST || (AURA_DEFINED && !_.isUndefined(global.aura.config.riak) ? global.aura.config.riak.host : '127.0.0.1');
-  this.port = process.env.SZ_RIAK_PORT || (AURA_DEFINED && !_.isUndefined(global.aura.config.riak) ? global.aura.config.riak.port : 8098);
+  if (!_.isPlainObject(options)) {
+    options = {};
+  }
+
+  this.bucket = options.bucket || '';
+  this.host = options.host || process.env.SZ_RIAK_HOST || '127.0.0.1';
+  this.port = options.port || process.env.SZ_RIAK_PORT || 8098;
 }
 
 Riak.ASYNC_LIMIT = process.env.SZ_RIAK_ASYNC_LIMIT || 20;
