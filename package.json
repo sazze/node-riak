@@ -1,6 +1,6 @@
 {
   "name": "@sazze/riak",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "A HTTP REST API client for riak",
   "main": "./riak.js",
   "homepage": "https://github.com/nodejs/node-riak",
