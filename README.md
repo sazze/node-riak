@@ -1,4 +1,4 @@
-@sazze/riak [![Build Status](https://travis-ci.org/sazze/node-riak.png?branch=master)](https://travis-ci.org/sazze/node-riak)
+@sazze/riak [![Build Status](https://travis-ci.org/sazze/node-riak.svg?branch=master%2Fmaster)](https://travis-ci.org/sazze/node-riak)
 ====================
 
 A [Riak][0] HTTP Rest API client.
