@@ -189,14 +189,16 @@ describe('riak client', function () {
       some: 'value'
     };
 
-    riak.put('test1', obj, function (err, body, headers) {
+    riak.put('test1', obj, function (err, body, resp) {
+      var headers = resp.headers;
       var parsedHeaders = Riak.parseHeaders(headers);
 
       expect(err).to.equal(null);
       expect(headers['content-type']).to.equal('application/json');
       expect(body).to.eql(_.merge(obj, parsedHeaders));
 
-      riak.get('test1', function (err, body, headers) {
+      riak.get('test1', function (err, body, resp) {
+        var headers = resp.headers;
         var parsedHeaders = Riak.parseHeaders(headers);
 
         expect(err).to.equal(null);
@@ -231,9 +233,9 @@ describe('riak client', function () {
       expect(err).to.equal(undefined);
 
       _.forEach(resp, function (r) {
-        var parsedHeaders = Riak.parseHeaders(r.headers);
+        var parsedHeaders = Riak.parseHeaders(r.rawResp.headers);
 
-        expect(r.headers['content-type']).to.equal('application/json');
+        expect(r.rawResp.headers['content-type']).to.equal('application/json');
         expect(r.resp).to.eql(_.merge(obj, parsedHeaders));
       });
 
@@ -241,9 +243,9 @@ describe('riak client', function () {
         expect(err).to.equal(undefined);
 
         _.forEach(resp, function (r) {
-          var parsedHeaders = Riak.parseHeaders(r.headers);
+          var parsedHeaders = Riak.parseHeaders(r.rawResp.headers);
 
-          expect(r.headers['content-type']).to.equal('application/json');
+          expect(r.rawResp.headers['content-type']).to.equal('application/json');
           expect(r.resp).to.eql(_.merge(obj, parsedHeaders));
         });
 

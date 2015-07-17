@@ -194,8 +194,8 @@ Riak.prototype.mget = function (keys, cb) {
   }
 
   async.mapLimit(keys, Riak.ASYNC_LIMIT, function (key, callback) {
-    this.get(key, function (err, res, headers) {
-      callback(err, {resp: res, headers: headers});
+    this.get(key, function (err, res, resp) {
+      callback(err, {resp: res, rawResp: resp});
     });
   }.bind(this), function (err, results) {
     cb(err, results);
@@ -228,12 +228,12 @@ Riak.prototype.get = function (key, cb) {
 
     if (resp.statusCode == 404) {
       // handle not found response
-      cb(null, {});
+      cb(null, {}, resp);
       return;
     }
 
     if (resp.statusCode != 200) {
-      cb(new Error('riak returned status code: ' + resp.statusCode));
+      cb(new Error('riak returned status code: ' + resp.statusCode), null, resp);
       return;
     }
 
@@ -243,7 +243,7 @@ Riak.prototype.get = function (key, cb) {
 
     _.merge(body, Riak.parseHeaders(resp.headers));
 
-    cb(null, body, resp.headers);
+    cb(null, body, resp);
   });
 };
 
@@ -259,8 +259,8 @@ Riak.prototype.mput = function (puts, cb) {
       return;
     }
 
-    this.put(put.key, put.body, put.headers, function (err, res, headers) {
-      callback(err, {resp: res, headers: headers});
+    this.put(put.key, put.body, put.headers, function (err, res, resp) {
+      callback(err, {resp: res, rawResp: resp});
     });
   }.bind(this), function (err, results) {
     cb(err, results);
@@ -316,7 +316,7 @@ Riak.prototype.put = function (key, body, headers, cb) {
     log.verbose('riak response: ' + body);
 
     if (resp.statusCode != 200) {
-      cb(new Error('riak returned status code: ' + resp.statusCode));
+      cb(new Error('riak returned status code: ' + resp.statusCode), null, resp);
       return;
     }
 
@@ -326,7 +326,7 @@ Riak.prototype.put = function (key, body, headers, cb) {
 
     _.merge(body, Riak.parseHeaders(resp.headers));
 
-    cb(null, body, resp.headers);
+    cb(null, body, resp);
   });
 };
 
@@ -410,12 +410,12 @@ Riak.prototype.secondaryIndexSearch = function (index, search, options, cb) {
 
     if (resp.statusCode == 404) {
       // handle not found response
-      cb(null, {});
+      cb(null, {}, resp);
       return;
     }
 
     if (resp.statusCode != 200) {
-      cb(new Error('riak returned status code: ' + resp.statusCode), body);
+      cb(new Error('riak returned status code: ' + resp.statusCode), body, resp);
       return;
     }
 
@@ -423,6 +423,6 @@ Riak.prototype.secondaryIndexSearch = function (index, search, options, cb) {
       body = JSON.parse(body);
     }
 
-    cb(null, body);
+    cb(null, body, resp);
   });
 };
