@@ -214,7 +214,7 @@ Riak.prototype.get = function (key, cb) {
 
   var url = this.getUrl(key);
 
-  log.verbose('riak url: GET ' + url);
+  log.debug('riak url: GET ' + url);
 
   client(url, function (err, resp, body) {
     if (err) {
@@ -303,7 +303,7 @@ Riak.prototype.put = function (key, body, headers, cb) {
 
   var url = this.getUrl(key);
 
-  log.verbose('riak url: PUT ' + url);
+  log.debug('riak url: PUT ' + url);
 
   client.put({url: url, body: body, headers: headers, qs: {returnbody: true}}, function (err, resp, body) {
     if (err) {
@@ -353,7 +353,7 @@ Riak.prototype.del = function (key, cb) {
 
   var url = this.getUrl(key);
 
-  log.verbose('riak url: DELETE ' + url);
+  log.debug('riak url: DELETE ' + url);
 
   client.del(url, function (err, resp) {
     if (err) {
@@ -396,7 +396,7 @@ Riak.prototype.secondaryIndexSearch = function (index, search, options, cb) {
 
   var url = this.getSecondaryIndexUrl(index, search, options);
 
-  log.verbose('riak url: GET ' + url);
+  log.debug('riak url: GET ' + url);
 
   client(url, function (err, resp, body) {
     if (err) {
